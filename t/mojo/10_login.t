@@ -151,6 +151,22 @@ sub test_copy_without_prepare($clone) {
     remove_machines($clone);
 }
 
+sub test_logout_ldap {
+    my ($username, $password) = ( new_domain_name(),$$);
+    my $user = create_ldap_user( $username, $password);
+
+    $t->post_ok('/login' => form => {login => $username, password => $password});
+    is($t->tx->res->code(),302);
+
+    $t->ua->get($URL_LOGOUT);
+
+    $t->post_ok('/login' => form => {login => $username, password => 'bigtime'});
+    is($t->tx->res->code(),403);
+
+    $t->post_ok('/login' => form => {login => $username, password => $password});
+    is($t->tx->res->code(),302);
+}
+
 ########################################################################################
 
 init('/etc/ravada.conf',0);
@@ -159,13 +175,19 @@ like($connector->{driver} , qr/mysql/i) or BAIL_OUT;
 
 remove_old_domains_req();
 
+if (!rvd_front->ping_backend) {
+    diag("SKIPPED: no backend");
+    done_testing();
+    exit;
+}
+
 $t = Test::Mojo->new($SCRIPT);
 $t->ua->inactivity_timeout(900);
 $t->ua->connect_timeout(60);
 my @bases;
 my @clones;
 
-for my $vm_name ( vm_names() ) {
+for my $vm_name (@{rvd_front->list_vm_types} ) {
 
     diag("Testing new machine in $vm_name");
 
