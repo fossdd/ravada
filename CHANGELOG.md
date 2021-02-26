@@ -11,6 +11,7 @@
 
 **Bugfixes**
 
+- ISO files crashed on clone
 - Shared storage detection \[#1503]
 - Ubuntu 20.04 MD5SUM file gone [\#1420]
 - Fix docker files config and dependencies [\#1411]
